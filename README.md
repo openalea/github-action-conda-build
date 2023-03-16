@@ -28,5 +28,5 @@ jobs:
   build:
     uses: openalea/github-action-conda-build/.github/workflows/conda-package-build.yml@main
     secrets: 
-      token: ${{ secrets.ANACONDA_TOKEN }}
+      anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
 ```
