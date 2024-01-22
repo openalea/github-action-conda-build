@@ -4,8 +4,8 @@ on:
   workflow_call:
     inputs:
       python-minor-version:
-        description: 'Python minor version on which to build / deploy the package. Default is "[8, 9, 10]" '
-        default: "[8, 9, 10]"
+        description: 'Python minor version on which to build / deploy the package. Default is "[8, 9, 10, 11, 12]" '
+        default: "[8, 9, 10, 11, 12]"
         required: false
         type: string
       numpy-version:
@@ -21,7 +21,7 @@ on:
     secrets:
       anaconda_token:
         description: 'Anaconda access Token (required)'
-        required: true      
+        required: true
 
 jobs:
   build-and-publish:
@@ -36,13 +36,13 @@ jobs:
           - ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
         exclude:
           - isMaster: false
-            python-minor-version: 7
-          - isMaster: false
             python-minor-version: 8
           - isMaster: false
             python-minor-version: 9
           - isMaster: false
             python-minor-version: 11
+          - isMaster: false
+            python-minor-version: 12
           - isMaster: false
             os: macos-latest
             python-minor-version: 10
