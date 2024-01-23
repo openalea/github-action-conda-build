@@ -9,8 +9,8 @@ on:
         required: false
         type: string
       numpy-version:
-        description: 'Numpy minor version. Default is 22.'
-        default: ''
+        description: 'Numpy minor version. Default is None.'
+        default: 0
         required: false
         type: number
       conda-channels:
