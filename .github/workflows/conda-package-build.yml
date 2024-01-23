@@ -10,9 +10,8 @@ on:
         type: string
       numpy-version:
         description: 'Numpy minor version. Default is None.'
-        default: 0
+        default: ''
         required: false
-        type: number
       conda-channels:
         description: 'Conda channels used during the building phase of the package. Default is the value of the GitHub variable `ANACONDA_CHANNELS`. If not set, job `openalea/action-build-publish-anaconda` will set it as `conda-forge` '
         default: ${{ vars.ANACONDA_CHANNELS}}
