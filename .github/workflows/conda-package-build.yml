@@ -22,6 +22,14 @@ on:
       anaconda_token:
         description: 'Anaconda access Token (required)'
         required: true
+      rtds_webhook_url:
+        description: Webhook url to generate the doc on readthedocs.
+        required: false
+        default: ''
+      rtds_webhook_token:
+        description: Webhook token to generate the doc on readthedocs.
+        required: false
+        default: ''
 
 jobs:
   build-and-publish:
@@ -60,6 +68,34 @@ jobs:
         cond: ${{ startsWith(github.ref, 'refs/tags/v') }}
         if_true: 'true'
         if_false: 'false'
+    - name: Determine readthedocs triggering
+      id: readthedocs-url-triggering
+      run: | 
+        echo "::group::Read the doc trigerring"
+        export RTDS_WEBHOOK_TOKEN=''
+        export RTDS_WEBHOOK_URL=''
+        if [[ ${RUNNER_OS} = 'Linux' ]]; then
+          if [[ ${{ inputs.python }} = "10" ]]; then
+            if [[ ${{ secrets.rtds_webhook_url }} = '' ]]; then
+              echo "No readthedocs url provided. See https://github.com/dfm/rtds-action"
+            else
+              if [[ ${{ secrets.rtds_webhook_token }} = '' ]]; then
+                echo "No readthedocs token provided. See https://github.com/dfm/rtds-action"
+              else
+                export RTDS_WEBHOOK_TOKEN='${{ secrets.anaconda_token }}''
+                export RTDS_WEBHOOK_URL='${{ secrets.rtds_webhook_url }}''
+              fi
+            fi
+          else
+            echo "Run readthedocs only on Ubuntu with Python 10"
+          fi
+        else
+          echo "Run readthedocs only on Ubuntu with Python 10"
+        fi
+        echo "RTDS_WEBHOOK_TOKEN=${RTDS_WEBHOOK_TOKEN}" >> $GITHUB_OUTPUT
+        echo "RTDS_WEBHOOK_URL=${RTDS_WEBHOOK_URL}" >> $GITHUB_OUTPUT
+        echo "::endgroup::"
+      shell: bash -l {0}  
     - name: Build and Publish
       uses: openalea/action-build-publish-anaconda@main
       with:
@@ -72,3 +108,5 @@ jobs:
         publish: ${{ steps.publish.outputs.value }}
         label: main
         buildoptions: '--no-test'
+        rtds_webhook_url: ${{ steps.readthedocs-triggering.outputs.RTDS_WEBHOOK_URL }}
+        rtds_webhook_token: ${{ steps.readthedocs-triggering.outputs.RTDS_WEBHOOK_TOKEN }}
