@@ -53,8 +53,6 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
-    - name: Setup cl.exe for windows (does nothing for linux and macosx)
-      uses: ilammy/msvc-dev-cmd@v1
     - name: Determine publication
       uses: haya14busa/action-cond@v1
       id: publish
