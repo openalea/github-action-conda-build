@@ -10,7 +10,7 @@ on:
         type: string
       operating-system:
         description: 'OS on which to build / deploy the package. Default is "[ ubuntu-latest , macos-latest , macos-13 , windows-latest ]" '
-        default: "[ ubuntu-latest , macos-latest , macos-13 , windows-latest ]"
+        default: '["ubuntu-latest", "macos-latest", "macos-13", "windows-latest"]'
         required: false
         type: string
       numpy-version:
