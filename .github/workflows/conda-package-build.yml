@@ -8,6 +8,11 @@ on:
         default: "[8, 9, 10, 11, 12]"
         required: false
         type: string
+      operating-system:
+        description: 'OS on which to build / deploy the package. Default is "[ ubuntu-latest , macos-latest , macos-13 , windows-latest ]" '
+        default: "[ ubuntu-latest , macos-latest , macos-13 , windows-latest ]"
+        required: false
+        type: string
       numpy-version:
         description: 'Numpy minor version. Default is None.'
         default: 0
@@ -30,7 +35,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-latest , macos-latest , macos-13 , windows-latest ]
+        os: ${{ fromJson(inputs.operating-system) }}
         python-minor-version: ${{ fromJson(inputs.python-minor-version) }}
         isMaster:
           - ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
