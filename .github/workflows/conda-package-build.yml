@@ -3,6 +3,11 @@ name: Building Package using Conda
 on:
   workflow_call:
     inputs:
+      conda-directory:
+        description: 'Directory containing the conda recipe. Default is "conda".'
+        default: "conda"
+        required: false
+        type: string
       python-minor-version:
         description: 'Python minor version on which to build / deploy the package. Default is "[8, 9, 10, 11, 12]" '
         default: "[8, 9, 10, 11, 12]"
@@ -71,7 +76,7 @@ jobs:
     - name: Build and Publish
       uses: openalea/action-build-publish-anaconda@main
       with:
-        conda: conda
+        conda: ${{ inputs.conda-directory }}
         mamba: true
         python: ${{ matrix.python-minor-version }}
         numpy: ${{ inputs.numpy-version }}
