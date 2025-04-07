@@ -28,6 +28,11 @@ on:
         default: ${{ vars.ANACONDA_CHANNELS}}
         required: false
         type: string
+      build-options:
+        description: 'Build options for the package. Default is "--no-test".'
+        default: '--no-test'
+        required: false
+        type: string
     secrets:
       anaconda_token:
         description: 'Anaconda access Token (required)'
@@ -84,4 +89,4 @@ jobs:
         token: ${{ secrets.anaconda_token }}
         publish: ${{ steps.publish.outputs.value }}
         label: main
-        buildoptions: '--no-test'
+        buildoptions: ${{ inputs.build-options }}
