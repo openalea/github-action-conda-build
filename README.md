@@ -44,7 +44,7 @@ Arguments to this GH-action are set to default values, which are :
 
 but you can override them in the workflow file.
 
-For exemple, if you are in a `dev-new-feature` branch, and you want to run the tests on `ubuntu-latest` and `macos-latest`, `python 3.10` only, then your workflow file would look like this:
+For example, if you are in a `dev-new-feature` branch, and you want to run the tests on `ubuntu-latest` and `macos-latest`, `python 3.10` only, then your workflow file would look like this:
 
 ```yaml
 
