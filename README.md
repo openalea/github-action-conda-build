@@ -31,7 +31,7 @@ jobs:
       anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
 ```
 
-Arguments to this GH-actionare set to default values, which are :
+Arguments to this GH-action are set to default values, which are :
 
 ```yaml
   conda_directory: conda
