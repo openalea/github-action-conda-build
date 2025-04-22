@@ -79,7 +79,7 @@ jobs:
         if_true: 'true'
         if_false: 'false'
     - name: Build and Publish
-      uses: openalea/action-build-publish-anaconda@main
+      uses: openalea/action-build-publish-anaconda@msvc_fix
       with:
         conda: ${{ inputs.conda-directory }}
         mamba: true
