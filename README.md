@@ -35,8 +35,8 @@ Arguments to this GH-action are set to default values, which are :
 
 ```yaml
   conda_directory: conda
-  python_minor_version: [8, 9, 10, 11, 12]
-  operating_system: [ubuntu-latest, macos-latest, macos-13, windows-latest]
+  python-minor-version: [8, 9, 10, 11, 12]
+  operating-system: "['ubuntu-latest', 'macos-latest', 'macos-13', 'windows-latest']"
   numpy-version: 0
   conda-channels: ${{ vars.ANACONDA_CHANNELS}}
   build-options: "--no-test"
@@ -68,7 +68,7 @@ jobs:
     secrets:
       anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
     with:
-      python_minor_version: [ 10 ]
+      python-minor-version: [ 10 ]
       operating-system: '["ubuntu-latest", "macos-13", "windows-latest"]'
       build-options: ""
 ```
