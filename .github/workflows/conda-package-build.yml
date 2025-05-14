@@ -75,9 +75,7 @@ jobs:
       uses: openalea/action-build-publish-anaconda@conda_forge_pinning
       with:
         conda: ${{ inputs.conda-directory }}
-        mamba: true
         python: ${{ matrix.python-minor-version }}
-        numpy: ${{ inputs.numpy-version }}
         channels: ${{ inputs.conda-channels }}
         token: ${{ secrets.anaconda_token }}
         publish: ${{ steps.publish.outputs.value }}
