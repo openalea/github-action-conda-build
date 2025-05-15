@@ -94,4 +94,5 @@ jobs:
         token: ${{ secrets.anaconda_token }}
         publish: ${{ steps.publish.outputs.value }}
         label: ${{ inputs.label }}
-        buildoptions: ${{ inputs.build-options }}
+        build-options: ${{ inputs.build-options }}
+
