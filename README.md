@@ -40,11 +40,12 @@ Arguments to this GH-action are set to default values, which are :
   numpy-version: 0
   conda-channels: ${{ vars.ANACONDA_CHANNELS}}
   build-options: "--no-test"
+  label: main
 ```
 
 but you can override them in the workflow file.
 
-For example, if you are in a `dev-new-feature` branch, and you want to run the tests on `ubuntu-latest` and `macos-latest`, `python 3.10` only, then your workflow file would look like this:
+For example, if you are in a `dev-new-feature` branch, and you want to run the tests on `ubuntu-latest` and `macos-latest`, `python 3.10` only, and you tag your commit with `vx.x.x_dev` to upload your package to the your anaconda channel with the `test` label, then your workflow file would look like this:
 
 ```yaml
 
@@ -69,6 +70,7 @@ jobs:
       anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
     with:
       python-minor-version: [ 10 ]
-      operating-system: '["ubuntu-latest", "macos-13", "windows-latest"]'
+      operating-system: '["ubuntu-latest", "macos-latest"]'
       build-options: ""
+      label: test
 ```
