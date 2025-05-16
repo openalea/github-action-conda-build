@@ -72,5 +72,5 @@ jobs:
       python-minor-version: [ 10 ]
       operating-system: '["ubuntu-latest", "macos-latest"]'
       build-options: ""
-      label: test
+      label: latest
 ```
