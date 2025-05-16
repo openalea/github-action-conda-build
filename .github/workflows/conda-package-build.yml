@@ -33,7 +33,6 @@ on:
         default: '--no-test'
         required: false
         type: string
-
       label:
         description: 'Label for anaconda upload and channel labels. The package will be uploaded to `https://anaconda.org/mychanel/labels/label`. Default is "main".'
         default: 'main'
