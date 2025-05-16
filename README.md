@@ -69,7 +69,7 @@ jobs:
     secrets:
       anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
     with:
-      python-minor-version: [ 10 ]
+      python-minor-version: "[ 10 ]"
       operating-system: '["ubuntu-latest", "macos-latest"]'
       build-options: ""
       label: latest
