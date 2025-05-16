@@ -81,7 +81,7 @@ jobs:
       uses: haya14busa/action-cond@v1
       id: publish
       with:
-        cond: ${{ startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/main' && inputs.label != 'main')}}
+        cond: ${{ startsWith(github.ref, 'refs/tags/v') || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && inputs.label != 'main')}}
         if_true: 'true'
         if_false: 'false'
     - name: Build and Publish
