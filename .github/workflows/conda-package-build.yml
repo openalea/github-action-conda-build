@@ -33,7 +33,6 @@ on:
         default: '--no-test'
         required: false
         type: string
-
       label:
         description: 'Label for anaconda upload and channel labels. The package will be uploaded to `https://anaconda.org/mychanel/labels/label`. Default is "main".'
         default: 'main'
@@ -77,11 +76,14 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
     - name: Determine publication
       uses: haya14busa/action-cond@v1
       id: publish
       with:
-        cond: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        cond: ${{ startsWith(github.ref, 'refs/tags/v') || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && inputs.label != 'main')}}
         if_true: 'true'
         if_false: 'false'
     - name: Build and Publish
