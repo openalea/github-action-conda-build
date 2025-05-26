@@ -28,6 +28,11 @@ on:
         default: '--no-test'
         required: false
         type: string
+      label:
+        description: 'Label for anaconda upload and channel labels. The package will be uploaded to `https://anaconda.org/mychanel/labels/label`. Default is "main".'
+        default: 'main'
+        required: false
+        type: string
     secrets:
       anaconda_token:
         description: 'Anaconda access Token (required)'
@@ -44,33 +49,45 @@ jobs:
         python-minor-version: ${{ fromJson(inputs.python-minor-version) }}
         isMaster:
           - ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
+        isRelease:
+          - ${{ github.event_name == 'release' }}
         exclude:
-          - isMaster: false
+          - isRelease: false
             python-minor-version: 9
-          - isMaster: false
+          - isRelease: false
+            python-minor-version: 10
+          - isRelease: false
             python-minor-version: 11
           - isMaster: false
+            os: macos-latest
             python-minor-version: 12
           - isMaster: false
-            os: macos-latest
-            python-minor-version: 10
-          - isMaster: false
             os: macos-13
-            python-minor-version: 10
+            python-minor-version: 12
           - isMaster: false
             os: windows-latest
-            python-minor-version: 10
+            python-minor-version: 12
 
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        fetch-tags: true
     - name: Determine publication
       uses: haya14busa/action-cond@v1
       id: publish
       with:
-        cond: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        cond: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'release') }}
         if_true: 'true'
         if_false: 'false'
+    - name: Determine label
+      uses: haya14busa/action-cond@v1
+      id: determine_label
+      with:
+        cond: ${{ github.event_name == 'release' }}
+        if_true: 'main'
+        if_false: 'latest'
     - name: Build and Publish
       uses: openalea/action-build-publish-anaconda@conda_forge_pinning
       with:
@@ -79,5 +96,6 @@ jobs:
         channels: ${{ inputs.conda-channels }}
         token: ${{ secrets.anaconda_token }}
         publish: ${{ steps.publish.outputs.value }}
-        label: main
-        buildoptions: ${{ inputs.build-options }}
+        label: ${{ steps.determine_label.outputs.value }}
+        build-options: ${{ inputs.build-options }}
+

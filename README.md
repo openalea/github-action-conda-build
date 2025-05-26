@@ -16,12 +16,15 @@ name: Building Package
 on:
   push:
     branches:
-      - '**'
+      - main
+      - master
     tags:
       - 'v*'
   pull_request:
     branches:
       - '**'
+  release:
+    types: [created]
 
 
 jobs:
@@ -40,6 +43,7 @@ Arguments to this GH-action are set to default values, which are :
   numpy-version: 0
   conda-channels: ${{ vars.ANACONDA_CHANNELS}}
   build-options: "--no-test"
+  label: main
 ```
 
 but you can override them in the workflow file.
@@ -68,7 +72,26 @@ jobs:
     secrets:
       anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
     with:
-      python-minor-version: [ 10 ]
-      operating-system: '["ubuntu-latest", "macos-13", "windows-latest"]'
+      python-minor-version: "[ 10 ]"
+      operating-system: '["ubuntu-latest", "macos-latest"]'
       build-options: ""
+```
+
+Also, note that to publish your package to your anaconda channel, you must meet one of the two following conditions :
+
+- have a tag that defines a new version of your package : `v...`. This allows uploading a new version of the package on the `main` anaconda channel
+- be on the `main` / `master` branch and define a label `test` or `dev` or `latest` (the former is recommanded). For exemple, you want to release your package on the `latest` channel of anaconda, only one version of python but on all os :
+```yaml
+name: Building Package
+
+...
+
+jobs:
+  build:
+    uses: openalea/github-action-conda-build/.github/workflows/conda-package-build.yml@main
+    secrets:
+      anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
+    with:
+      python-minor-version: [ 10 ]
+      label: latest
 ```
