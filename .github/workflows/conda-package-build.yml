@@ -52,6 +52,8 @@ jobs:
       matrix:
         os: ${{ fromJson(inputs.operating-system) }}
         python-minor-version: ${{ fromJson(inputs.python-minor-version) }}
+        isMaster:
+          - ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
         isRelease:
           - ${{ github.event_name == 'release' }}
         exclude:
@@ -61,13 +63,13 @@ jobs:
             python-minor-version: 10
           - isRelease: false
             python-minor-version: 11
-          - isRelease: false
+          - isMaster: false
             os: macos-latest
             python-minor-version: 12
-          - isRelease: false
+          - isMaster: false
             os: macos-13
             python-minor-version: 12
-          - isRelease: false
+          - isMaster: false
             os: windows-latest
             python-minor-version: 12
 
