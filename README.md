@@ -35,7 +35,7 @@ Arguments to this GH-action are set to default values, which are :
 
 ```yaml
   conda_directory: conda
-  python-minor-version: [8, 9, 10, 11, 12]
+  python-minor-version: "[8, 9, 10, 11, 12]"
   operating-system: "['ubuntu-latest', 'macos-latest', 'macos-13', 'windows-latest']"
   numpy-version: 0
   conda-channels: ${{ vars.ANACONDA_CHANNELS}}
@@ -77,7 +77,7 @@ jobs:
 Also, note that to publish your package to your anaconda channel, you must meet one of the two following conditions :
 
 - have a tag that defines a new version of your package : `v...`. This allows uploading a new version of the package on the `main` anaconda channel
-- be on the `main` / `master` branch and define a label `test` or `dev` or `latest` (the former is recommanded). For exemple, you want to release your package on the `latest` channel of anaconda, only one version of python but on all os : 
+- be on the `main` / `master` branch and define a label `test` or `dev` or `latest` (the former is recommanded). For exemple, you want to release your package on the `latest` channel of anaconda, only one version of python but on all os :
 ```yaml
 name: Building Package
 
@@ -89,6 +89,6 @@ jobs:
     secrets:
       anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
     with:
-      python-minor-version: [ 10 ]
+      python-minor-version: "[ 10 ]"
       label: latest
 ```
