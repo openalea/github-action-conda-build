@@ -9,8 +9,8 @@ on:
         required: false
         type: string
       python-minor-version:
-        description: 'Python minor version on which to build / deploy the package. Default is "[8, 9, 10, 11, 12]" '
-        default: "[8, 9, 10, 11, 12]"
+        description: 'Python minor version on which to build / deploy the package. Default is "[9, 10, 11, 12]" '
+        default: "[9, 10, 11, 12]"
         required: false
         type: string
       operating-system:
@@ -52,26 +52,24 @@ jobs:
       matrix:
         os: ${{ fromJson(inputs.operating-system) }}
         python-minor-version: ${{ fromJson(inputs.python-minor-version) }}
-        isMaster:
-          - ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
+        isRelease:
+          - ${{ github.event_name == 'release' }}
         exclude:
-          - isMaster: false
-            python-minor-version: 8
-          - isMaster: false
+          - isRelease: false
             python-minor-version: 9
-          - isMaster: false
+          - isRelease: false
+            python-minor-version: 10
+          - isRelease: false
             python-minor-version: 11
-          - isMaster: false
-            python-minor-version: 12
-          - isMaster: false
+          - isRelease: false
             os: macos-latest
-            python-minor-version: 10
-          - isMaster: false
+            python-minor-version: 12
+          - isRelease: false
             os: macos-13
-            python-minor-version: 10
-          - isMaster: false
+            python-minor-version: 12
+          - isRelease: false
             os: windows-latest
-            python-minor-version: 10
+            python-minor-version: 12
 
     steps:
     - name: Checkout
@@ -83,9 +81,16 @@ jobs:
       uses: haya14busa/action-cond@v1
       id: publish
       with:
-        cond: ${{ startsWith(github.ref, 'refs/tags/v') || ((github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') && inputs.label != 'main')}}
+        cond: ${{ (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'release') }}
         if_true: 'true'
         if_false: 'false'
+    - name: Determine label
+      uses: haya14busa/action-cond@v1
+      id: determine_label
+      with:
+        cond: ${{ github.event_name == 'release' }}
+        if_true: 'main'
+        if_false: 'latest'
     - name: Build and Publish
       uses: openalea/action-build-publish-anaconda@main
       with:
@@ -95,6 +100,6 @@ jobs:
         channels: ${{ inputs.conda-channels }}
         token: ${{ secrets.anaconda_token }}
         publish: ${{ steps.publish.outputs.value }}
-        label: ${{ inputs.label }}
+        label: ${{ steps.determine_label.outputs.value }}
         build-options: ${{ inputs.build-options }}
 
