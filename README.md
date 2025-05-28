@@ -16,8 +16,7 @@ name: Building Package
 on:
   push:
     branches:
-      - main
-      - master
+      - '**'
     tags:
       - 'v*'
   pull_request:

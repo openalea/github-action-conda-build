@@ -52,24 +52,24 @@ jobs:
       matrix:
         os: ${{ fromJson(inputs.operating-system) }}
         python-minor-version: ${{ fromJson(inputs.python-minor-version) }}
-        isMaster:
-          - ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
-        isRelease:
-          - ${{ github.event_name == 'release' }}
+        xos:
+          - ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (github.event_name == 'release')  || (startsWith(github.ref, 'refs/tags/v')) }}
+        xpy:
+          - ${{ (github.event_name == 'release')  || (startsWith(github.ref, 'refs/tags/v')) }}
         exclude:
-          - isRelease: false
+          - xpy: false
             python-minor-version: 9
-          - isRelease: false
+          - xpy: false
             python-minor-version: 10
-          - isRelease: false
+          - xpy: false
             python-minor-version: 11
-          - isMaster: false
+          - xos: false
             os: macos-latest
             python-minor-version: 12
-          - isMaster: false
+          - xos: false
             os: macos-13
             python-minor-version: 12
-          - isMaster: false
+          - xos: false
             os: windows-latest
             python-minor-version: 12
 
@@ -83,7 +83,7 @@ jobs:
       uses: haya14busa/action-cond@v1
       id: publish
       with:
-        cond: ${{ (startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'release') }}
+        cond: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (startsWith(github.ref, 'refs/tags/v')) || (github.event_name == 'release') }}
         if_true: 'true'
         if_false: 'false'
     - name: Determine label
