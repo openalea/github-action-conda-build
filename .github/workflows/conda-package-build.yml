@@ -94,7 +94,7 @@ jobs:
       with:
         cond: ${{ (github.event_name == 'release') || (startsWith(github.ref, 'refs/tags/v'))}}
         if_true: ''
-        if_false: '+dev'
+        if_false: '_postdev'
     - name: Build and Publish
       uses: openalea/action-build-publish-anaconda@conda_forge_pinning
       with:
