@@ -88,6 +88,13 @@ jobs:
         cond: ${{ github.event_name == 'release' }}
         if_true: 'main'
         if_false: 'latest'
+    - name: Determine suffix
+      uses: haya14busa/action-cond@v1
+      id: determine_suffix
+      with:
+        cond: ${{ (github.event_name == 'release') || (startsWith(github.ref, 'refs/tags/v'))}}
+        if_true: ''
+        if_false: '+dev'
     - name: Build and Publish
       uses: openalea/action-build-publish-anaconda@conda_forge_pinning
       with:
@@ -97,5 +104,6 @@ jobs:
         token: ${{ secrets.anaconda_token }}
         publish: ${{ steps.publish.outputs.value }}
         label: ${{ steps.determine_label.outputs.value }}
+        suffix: ${{ steps.determine_suffix.outputs.value }}
         build-options: ${{ inputs.build-options }}
 
