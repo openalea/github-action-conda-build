@@ -51,18 +51,23 @@ For example, if you are in a `dev-new-feature` branch, and you want to run the t
 ```yaml
 
 
-name: Building Package
+name: build_publish_anaconda
 
 on:
   push:
     branches:
-      - dev-new-feature
+      - '**'
     tags:
       - 'v*'
   pull_request:
     branches:
       - '**'
+  release:
+    types: [published]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
