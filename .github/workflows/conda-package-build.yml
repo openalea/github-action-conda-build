@@ -48,9 +48,9 @@ jobs:
         os: ${{ fromJson(inputs.operating-system) }}
         python-minor-version: ${{ fromJson(inputs.python-minor-version) }}
         xos:
-          - ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (github.event_name == 'release')  || (startsWith(github.ref, 'refs/tags/v')) }}
+          - ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (startsWith(github.ref, 'refs/tags/v')) }}
         xpy:
-          - ${{ (github.event_name == 'release')  || (startsWith(github.ref, 'refs/tags/v')) }}
+          - ${{ (startsWith(github.ref, 'refs/tags/v')) }}
         exclude:
           - xpy: false
             python-minor-version: 9
