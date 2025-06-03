@@ -136,7 +136,7 @@ jobs:
       uses: haya14busa/action-cond@v1
       id: determine_copy_on_latest
       with:
-        cond: ${{ ((startsWith(github.ref, 'refs/tags/v')) }}
+        cond: ${{ (startsWith(github.ref, 'refs/tags/v')) }}
         if_true: 'true'
         if_false: 'false'
     # always skip promote, except triggered by release event
@@ -156,7 +156,7 @@ jobs:
         channels: ${{ inputs.conda-channels }}
         build-options: ${{ inputs.build-options }}        
         label: ${{ steps.determine_label.outputs.value }}
-        suffix_if_latest: : ${{ inputs.suffix_if_latest }}
+        suffix_if_latest: ${{ inputs.suffix_if_latest }}
         promote_from: ${{ inputs.promote_from }}
         skip_build: ${{ steps.determine_skip_build.outputs.value }}
         publish: ${{ steps.determine_publish.outputs.value }}
