@@ -123,7 +123,7 @@ jobs:
         cond: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (startsWith(github.ref, 'refs/tags/v')) }}
         if_true: 'true'
         if_false: 'false'
-    # select label :  rc for tags, otherwise 'latest'
+    # select label :  'rc' for tags, otherwise 'latest'
     - name: Determine label
       uses: haya14busa/action-cond@v1
       id: determine_label
