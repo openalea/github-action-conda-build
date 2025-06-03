@@ -148,7 +148,7 @@ jobs:
         if_true: 'false'
         if_false: 'true'
     - name: Build and Publish
-      uses: openalea/action-build-publish-anaconda@8f9a40b140221e873f38e581168fa0b85ec63197
+      uses: openalea/action-build-publish-anaconda@conda_forge_pinning
       with:
         conda: ${{ inputs.conda-directory }}
         python: ${{ matrix.python-minor-version }}
