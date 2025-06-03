@@ -2,6 +2,7 @@ name: Building Package using Conda
 
 on:
   workflow_call:
+    # Define defaults for shared action
     inputs:
       conda-directory:
         description: 'Directory containing the conda recipe. Default is "conda".'
@@ -24,13 +25,43 @@ on:
         required: false
         type: string
       build-options:
-        description: 'Build options for the package. Default is "--no-test".'
-        default: '--no-test'
+        description: 'Build options for the package. Default is "" (no options).'
+        default: ''
         required: false
         type: string
       label:
-        description: 'Label for anaconda upload and channel labels. The package will be uploaded to `https://anaconda.org/mychanel/labels/label`. Default is "main".'
+        description: 'Label of Anaconda channel to upload to. The package will be uploaded to `https://anaconda.org/mychanel/labels/label`. Default is "latest".'
         default: 'latest'
+        required: false
+        type: string
+      suffix_if_latest:
+        description: 'Suffix to be added after build_string before uploading on latest. Default is "_nightly"'
+        default: '_nightly'
+        required: false
+        type: string      
+      promote_from:
+        description: 'Label of Annaconda channel to promote from if promotion to main is activated. Default is "rc" (release candidate)'
+        default: 'rc'
+        required: false
+        type: string
+      skip_build:
+        description: 'Whether conda build step should be skipped. Default is "false"'
+        default: 'false'
+        required: false
+        type: string
+      publish:
+        description: 'Whether Anaconda publication step should be run. Default is "true"'
+        default: 'true'
+        required: false
+        type: string
+      copy_on_latest:
+        description: 'Whether a publication on latest is required, in addition to publication on a different label. Default is "false"'
+        default: 'false'
+        required: false
+        type: string
+      skip_promote:
+        description: 'Whether promotion to label main should be skipped. Default is "true"'
+        default: 'true'
         required: false
         type: string
     secrets:
@@ -38,33 +69,35 @@ on:
         description: 'Anaconda access Token (required)'
         required: true
 
+# Strategy for openalea CI (triggered on: push: all branches (*), tags:v*, pull-request and release)
 jobs:
   build-and-publish:
     name: ${{ matrix.os }}, Python 3.${{ matrix.python-minor-version }} for conda deployment
     runs-on: ${{ matrix.os }}
+    # restrict default os/py versions
     strategy:
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.operating-system) }}
         python-minor-version: ${{ fromJson(inputs.python-minor-version) }}
-        xos:
+        all_os:
           - ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (startsWith(github.ref, 'refs/tags/v')) }}
-        xpy:
+        all_py:
           - ${{ (startsWith(github.ref, 'refs/tags/v')) }}
         exclude:
-          - xpy: false
+          - all_py: false
             python-minor-version: 9
-          - xpy: false
+          - all_py: false
             python-minor-version: 10
-          - xpy: false
+          - all_py: false
             python-minor-version: 11
-          - xos: false
+          - all_os: false
             os: macos-latest
             python-minor-version: 12
-          - xos: false
+          - all_os: false
             os: macos-13
             python-minor-version: 12
-          - xos: false
+          - all_os: false
             os: windows-latest
             python-minor-version: 12
 
@@ -74,13 +107,15 @@ jobs:
       with:
         fetch-depth: 0
         fetch-tags: true
-    - name: Determine build
+    # always build, except if triggered by a release event
+    - name: Determine skip build
       uses: haya14busa/action-cond@v1
-      id: determine_build
+      id: determine_skip_build
       with:
         cond: ${{ github.event_name == 'release' }}
-        if_true: 'false'
-        if_false: 'true'
+        if_true: 'true'
+        if_false: 'false'
+    # publish on pushes to master, commit or tags
     - name: Determine publication
       uses: haya14busa/action-cond@v1
       id: determine_publish
@@ -88,31 +123,46 @@ jobs:
         cond: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (startsWith(github.ref, 'refs/tags/v')) }}
         if_true: 'true'
         if_false: 'false'
-    - name: Determine promotion to main
+    # select label :  rc for tags, otherwise 'latest'
+    - name: Determine label
       uses: haya14busa/action-cond@v1
-      id: determine_promote
+      id: determine_label
       with:
-        cond: ${{ github.event_name == 'release' }}
+        cond: ${{ (startsWith(github.ref, 'refs/tags/v')) }}
+        if_true: 'rc'
+        if_false: 'latest'
+    # send a copy on latest for tags
+    - name: Determine copy on latest
+      uses: haya14busa/action-cond@v1
+      id: determine_copy_on_latest
+      with:
+        cond: ${{ ((startsWith(github.ref, 'refs/tags/v')) }}
         if_true: 'true'
         if_false: 'false'
-    - name: Determine suffix
+    # always skip promote, except triggered by release event
+    - name: Determine promotion to main
       uses: haya14busa/action-cond@v1
-      id: determine_suffix
+      id: determine_skip_promote
       with:
-        cond: ${{ (github.event_name == 'release') || (startsWith(github.ref, 'refs/tags/v'))}}
-        if_true: ''
-        if_false: '_post'
+        cond: ${{ github.event_name == 'release' }}
+        if_true: 'false'
+        if_false: 'true'
     - name: Build and Publish
       uses: openalea/action-build-publish-anaconda@conda_forge_pinning
       with:
         conda: ${{ inputs.conda-directory }}
         python: ${{ matrix.python-minor-version }}
-        channels: ${{ inputs.conda-channels }}
         token: ${{ secrets.anaconda_token }}
-        build: ${{ steps.determine_build.outputs.value }}
+        channels: ${{ inputs.conda-channels }}
+        build-options: ${{ inputs.build-options }}        
+        label: ${{ steps.determine_label.outputs.value }}
+        suffix_if_latest: : ${{ inputs.suffix_if_latest }}
+        promote_from: ${{ inputs.promote_from }}
+        skip_build: ${{ steps.determine_skip_build.outputs.value }}
         publish: ${{ steps.determine_publish.outputs.value }}
-        promote: ${{ steps.determine_promote.outputs.value }}
-        label: ${{ inputs.label }}
-        suffix: ${{ steps.determine_suffix.outputs.value }}
-        build-options: ${{ inputs.build-options }}
+        copy_on_latest: ${{ steps.determine_copy_on_latest.outputs.value }}
+        skip_promote: ${{ steps.determine_skip_promote.outputs.value }}
+
+
+
 
