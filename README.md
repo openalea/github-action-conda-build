@@ -88,5 +88,5 @@ jobs:
     with:
       python-minor-version: "[ 10 ]"
       label: "latest"
-	  suffix_if_latest: ""
+	  suffix: ""
 ```
