@@ -57,6 +57,11 @@ on:
         description: 'Force build/publish/test steps on all py versions. Default is "false" (do not force, let workflow decide)'
         default: 'false'
         required: false
+        type: string
+      force_build_and_publish:
+        description: 'Force calling build_and_publish action. Default is "false" (do not force, let workflow decide)'
+        default: 'false'
+        required: false
         type: string        
       force_publish:
         description: 'Force publication on Anaconda. Default is "false" (do not force, let workflow decide)'
@@ -77,7 +82,8 @@ on:
 jobs:
   build-and-publish:
     name: ${{ matrix.os }}, Python 3.${{ matrix.python-minor-version }} for conda deployment
-    if: ${{ (github.event_name != 'release') }}
+    # skip this job on release
+    if: (inputs.force_build_and_publish == "true") || (github.event_name != 'release')
     # launch multiple runners on matrix jobs
     runs-on: ${{ matrix.os }}
     # Adadapt build matrix strategy depending on trigerring event
@@ -114,6 +120,14 @@ jobs:
         fetch-depth: 0
         # Tags are required for GIT_DESCRIBE_TAG conda build version control
         fetch-tags: true
+    # promote only if release
+    - name: Determine call to promote_to_main action
+      uses: haya14busa/action-cond@v1
+      id: call_promote_to_main
+      with:
+        cond: ${{ (inputs.force_promote == "true") || (github.event == 'release') }}
+        if_true: 'true'
+        if_false: 'false'
     # publish only on pushes to master (commit or tags)
     - name: Determine publication
       uses: haya14busa/action-cond@v1
@@ -153,7 +167,7 @@ jobs:
         if_true: ${{ steps.determine_contextual_suffix.outputs.value }}
         if_false: ${{ inputs.force_suffix }}
     # call reusable build_and_publish action
-    - name: Build and Publish
+    - name: Build and Publish Action Call
       uses: openalea/action-build-publish-anaconda@main
       with:
         conda: ${{ inputs.conda-directory }}
@@ -166,6 +180,20 @@ jobs:
         label: ${{ steps.determine_label.outputs.value }}
         suffix: ${{ steps.determine_suffix.outputs.value }}
         publish: ${{ steps.determine_publish.outputs.value }}
+  #end job
+  promote-to-main:
+    name: Promoting to main label
+    runs-on: ubuntu-latest
+    # ensure it runs after build_and_publish (if tag & release are created simultaneously) 
+    needs: build-and-publish
+    if: (inputs.promote_to_main == "true" || github.event_name == 'release') && (needs.build-and-publish.result == 'skipped' || needs.build-and-publish.result == 'success')
+    - steps:
+    - name: Promote to main Action Call
+      uses: openalea/action-build-publish-anaconda/promote_to_main@main
+      with:
+        python: ${{ fromJson(inputs.python-minor-version)[fromJson(inputs.python-minor-version).length - 1] }}
+        token: ${{ secrets.anaconda_token }}
+        promote_from: ${{ inputs.promote_from }}
 
 
 
