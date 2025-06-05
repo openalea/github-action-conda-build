@@ -83,7 +83,7 @@ jobs:
   build-and-publish:
     name: ${{ matrix.os }}, Python 3.${{ matrix.python-minor-version }} for conda deployment
     # skip this job on release
-    if: (inputs.force_build_and_publish == "true") || (github.event_name != 'release')
+    if: ${{ (inputs.force_build_and_publish == "true") || (github.event_name != 'release') }}
     # launch multiple runners on matrix jobs
     runs-on: ${{ matrix.os }}
     # Adadapt build matrix strategy depending on trigerring event
