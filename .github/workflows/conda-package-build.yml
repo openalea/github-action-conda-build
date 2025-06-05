@@ -2,7 +2,6 @@ name: Building Package using Conda
 
 on:
   workflow_call:
-    # Define defaults for shared action
     inputs:
       conda-directory:
         description: 'Directory containing the conda recipe. Default is "conda".'
@@ -20,47 +19,52 @@ on:
         required: false
         type: string
       conda-channels:
-        description: 'Conda channels used during the building phase of the package. Default is the value of the GitHub variable `ANACONDA_CHANNELS`. If not set, job `openalea/action-build-publish-anaconda` will set it as `conda-forge` '
-        default: ${{ vars.ANACONDA_CHANNELS}}
+        description: 'Conda channels used during the building phase of the package. Default is the value of the GitHub variable `ANACONDA_CHANNELS`, or, if not set, `openalea3,conda-forge` '
+        default: ${{ vars.ANACONDA_CHANNELS || 'conda-forge,openalea3' }}
         required: false
         type: string
       build-options:
-        description: 'Build options for the package. Default is "" (no options).'
+        description: 'Options to be passed to conda build command. Default is "" (no options).'
         default: ''
         required: false
         type: string
-      label:
-        description: 'Label of Anaconda channel to upload to. The package will be uploaded to `https://anaconda.org/mychanel/labels/label`. Default is "latest".'
-        default: 'latest'
-        required: false
-        type: string
-      suffix:
-        description: 'Suffix for package build_string. Default is "" (no suffix)'
-        default: ''
-        required: false
-        type: string      
       promote_from:
         description: 'Label of Annaconda channel to promote from if promotion to main is activated. Default is "rc" (release candidate)'
         default: 'rc'
         required: false
         type: string
-      skip_build:
-        description: 'Whether conda build step should be skipped. Default is "false"'
+      force_label:
+        description: 'Force label of Anaconda channel to upload to. If not 'false', force_label is used as label. Default is "false" (do not force, let workflow decide).'
+        default: 'determine_label'
+        required: false
+        type: string
+      force_suffix:
+        description: 'Force suffix for package build_string. If not 'false', force_suffix is used as suffix. Default is "false" (do not force, let workflow decide)'
+        default: 'determine_suffix'
+        required: false
+        type: string
+      force_all_os:
+        description: 'Force build/publish/test steps on all os defined above. Default is "false" (do not force, let workflow decide)'
         default: 'false'
         required: false
         type: string
-      publish:
-        description: 'Whether Anaconda publication step should be run. Default is "true"'
-        default: 'true'
-        required: false
-        type: string
-      copy_on_latest:
-        description: 'Whether a publication on latest is required, in addition to publication on a different label. Default is "false"'
+      force_all_py:
+        description: 'Force build/publish/test steps on all py versions. Default is "false" (do not force, let workflow decide)'
         default: 'false'
         required: false
         type: string
-      skip_promote:
-        description: 'Whether promotion to label main should be skipped. Default is "true"'
+      force_build_and_publish:
+        description: 'Force calling build_and_publish action. Default is "false" (do not force, let workflow decide)'
+        default: 'false'
+        required: false
+        type: string        
+      force_publish:
+        description: 'Force publication on Anaconda. Default is "false" (do not force, let workflow decide)'
+        default: 'false'
+        required: false
+        type: string
+      force_promote:
+        description: 'Force promotion from label <promote_from> to label "main". Default is "false" (do not force, let workflow decide)'
         default: 'true'
         required: false
         type: string
@@ -69,21 +73,24 @@ on:
         description: 'Anaconda access Token (required)'
         required: true
 
-# Strategy for openalea CI (triggered on: push: all branches (*), tags:v*, pull-request and release)
+# Openalea strategy for build-publish-promote CI (triggered on: push: all branches (*), tags:v*, pull-request and release)
 jobs:
   build-and-publish:
     name: ${{ matrix.os }}, Python 3.${{ matrix.python-minor-version }} for conda deployment
+    # skip this job on release
+    if: (inputs.force_build_and_publish == "true") || (github.event_name != 'release')
+    # launch multiple runners on matrix jobs
     runs-on: ${{ matrix.os }}
-    # restrict default os/py versions
+    # Adadapt build matrix strategy depending on trigerring event
     strategy:
       fail-fast: false
       matrix:
         os: ${{ fromJson(inputs.operating-system) }}
         python-minor-version: ${{ fromJson(inputs.python-minor-version) }}
         all_os:
-          - ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (startsWith(github.ref, 'refs/tags/v')) }}
+          - ${{ (inputs.all_os == 'true') || (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (startsWith(github.ref, 'refs/tags/v')) }}
         all_py:
-          - ${{ (startsWith(github.ref, 'refs/tags/v')) }}
+          - ${{ (inputs.all_py == 'true') || (startsWith(github.ref, 'refs/tags/v')) }}
         exclude:
           - all_py: false
             python-minor-version: 9
@@ -106,70 +113,81 @@ jobs:
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        # Tags are required for GIT_DESCRIBE_TAG conda build version control
         fetch-tags: true
-    # always build, except if triggered by a release event
-    - name: Determine skip build
+    # promote only if release
+    - name: Determine call to promote_to_main action
       uses: haya14busa/action-cond@v1
-      id: determine_skip_build
+      id: call_promote_to_main
       with:
-        cond: ${{ github.event_name == 'release' }}
+        cond: ${{ (inputs.force_promote == "true") || (github.event == 'release') }}
         if_true: 'true'
         if_false: 'false'
-    # publish on pushes to master, commit or tags
+    # publish only on pushes to master (commit or tags)
     - name: Determine publication
       uses: haya14busa/action-cond@v1
       id: determine_publish
       with:
-        cond: ${{ (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (startsWith(github.ref, 'refs/tags/v')) }}
+        cond: ${{ (inputs.force_publish == "true") || (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (startsWith(github.ref, 'refs/tags/v')) }}
         if_true: 'true'
         if_false: 'false'
-    # select label :  'rc' for tags, otherwise 'latest'
+    # select label :  forced_label (if defined) or 'rc' for tags, 'dev' otherwise 'dev'
+    - name: Determine contextual label
+      uses: haya14busa/action-cond@v1
+      id: determine_contextual_label
+      with:
+        cond: ${{ (startsWith(github.ref, 'refs/tags/v')) }}
+        if_true: 'rc'
+        if_false: 'dev'
     - name: Determine label
       uses: haya14busa/action-cond@v1
       id: determine_label
       with:
+        cond: ${{ (inputs.force_label == "false") }}
+        if_true: ${{ steps.determine_contextual_label.outputs.value }}
+        if_false: ${{ inputs.force_label }}
+    # select suffix: forced_suffix (if defined), or '' (no suffix) for tags, otherwise '_dev'
+    - name: Determine contextual suffix
+      uses: haya14busa/action-cond@v1
+      id: determine_contextual_suffix
+      with:
         cond: ${{ (startsWith(github.ref, 'refs/tags/v')) }}
-        if_true: 'rc'
-        if_false: 'latest'
-    # select suffix: '' (no suffix) for tags, otherwise '_nightly'
+        if_true: ''
+        if_false: '_dev'
     - name: Determine suffix
       uses: haya14busa/action-cond@v1
       id: determine_suffix
       with:
-        cond: ${{ (startsWith(github.ref, 'refs/tags/v')) }}
-        if_true: ''
-        if_false: '_nightly'
-    # send a copy on latest for tags
-    - name: Determine copy on latest
-      uses: haya14busa/action-cond@v1
-      id: determine_copy_on_latest
-      with:
-        cond: ${{ (startsWith(github.ref, 'refs/tags/v')) }}
-        if_true: 'true'
-        if_false: 'false'
-    # always skip promote, except triggered by release event
-    - name: Determine promotion to main
-      uses: haya14busa/action-cond@v1
-      id: determine_skip_promote
-      with:
-        cond: ${{ github.event_name == 'release' }}
-        if_true: 'false'
-        if_false: 'true'
-    - name: Build and Publish
+        cond: ${{ (inputs.force_suffix == "false") }}
+        if_true: ${{ steps.determine_contextual_suffix.outputs.value }}
+        if_false: ${{ inputs.force_suffix }}
+    # call reusable build_and_publish action
+    - name: Build and Publish Action Call
       uses: openalea/action-build-publish-anaconda@conda_forge_pinning
       with:
         conda: ${{ inputs.conda-directory }}
+        condapython: ${{ fromJson(inputs.python-minor-version)[fromJson(inputs.python-minor-version).length - 1] }}
         python: ${{ matrix.python-minor-version }}
         token: ${{ secrets.anaconda_token }}
         channels: ${{ inputs.conda-channels }}
         build-options: ${{ inputs.build-options }}        
         label: ${{ steps.determine_label.outputs.value }}
         suffix: ${{ steps.determine_suffix.outputs.value }}
-        promote_from: ${{ inputs.promote_from }}
-        skip_build: ${{ steps.determine_skip_build.outputs.value }}
         publish: ${{ steps.determine_publish.outputs.value }}
-        copy_on_latest: ${{ steps.determine_copy_on_latest.outputs.value }}
-        skip_promote: ${{ steps.determine_skip_promote.outputs.value }}
+  #end job
+  promote-to-main:
+    name: Promoting to main label
+    runs-on: ubuntu-latest
+    # ensure it runs after build_and_publish (if tag & release are created simultaneously) 
+    needs: build-and-publish
+    if: (inputs.promote_to_main == "true" || github.event_name == 'release') && (needs.build-and-publish.result == 'skipped' || needs.build-and-publish.result == 'success')
+    - steps:
+    - name: Promote to main Action Call
+      uses: openalea/action-build-publish-anaconda/promote_to_main@main
+      with:
+        python: ${{ fromJson(inputs.python-minor-version)[fromJson(inputs.python-minor-version).length - 1] }}
+        token: ${{ secrets.anaconda_token }}
+        promote_from: ${{ inputs.promote_from }}
 
 
 

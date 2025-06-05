@@ -1,15 +1,17 @@
-# Build and Publish Anaconda Package
+# Build and Publish Anaconda Package using GitHub Actions
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Github workflow to build your software package and publish to an Anaconda repository following openalea guidelines.
+A reusable Github workflow to build your software package and publish to an Anaconda repository following openalea guidelines.
 
-### Example workflow to build and publish to anaconda according to openalea guidelines
+## Usage
 
-To operate, you just have to copy this template in your `.github/workflow/build_publish_anaconda.yml`.
+### Build and publish according to openalea guidelines
+
+Copy the template below in your source dir, using the following path: `.github/workflow/build_publish_anaconda.yml`.
 
 
 ```yaml
-
+# your_package/.github/workflow/build_publish_anaconda.yml
 
 name: Building Package after Openalea guidelines
 
@@ -37,20 +39,23 @@ jobs:
       anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
 ```
 
-Arguments to this GH-action are set to default values, which are :
+### Build and publish with differents options 
+
+If you do not follow completely (and/or debug) guidelines, you may need to adjust some options to non default values.
+Main options (with current defaults) are:
 
 ```yaml
   conda_directory: conda
   python-minor-version: [9, 10, 11, 12]
   operating-system: "['ubuntu-latest', 'macos-latest', 'macos-13', 'windows-latest']"
   numpy-version: 0
-  conda-channels: ${{ vars.ANACONDA_CHANNELS}}
+  conda-channels: ${{ vars.ANACONDA_CHANNELS || 'conda-forge,openalea3' }}
   build-options: ""
 ```
 
-You can override them in the workflow file.
+You can override them in the workflow file, by adding a 'with' section at the end of the file.
 
-For example, if you want to run without test on `ubuntu-latest` and `macos-latest`, `python 3.10` only, then your workflow file would look like this:
+For example, if you want to run without launching test on `ubuntu-latest` and `macos-latest`, `python 3.10` only, then your workflow file would look like this:
 
 ```yaml
 
@@ -70,7 +75,10 @@ jobs:
       build-options: "--no-test"
 ```
 
-You can also define a workflow that pilot the action in totally different way from openalea guidelines.
+### Use the reusable workflow in a different context 
+
+Many of the rules defined in this workflow can be controled by options, so that you can implement/test  build/publish strategies far from openalea guidelines.
+
 Eg the following workflows build and publish on label 'latest' all tags starting with 'v' for one python version only:
 ``yaml
 name: Building Package with specilised rules
@@ -87,6 +95,6 @@ jobs:
       anaconda_token: ${{ secrets.ANACONDA_TOKEN }}
     with:
       python-minor-version: "[ 10 ]"
-      label: "latest"
-	  suffix: ""
+      force_label: "latest"
+	  force_suffix: ""
 ```
