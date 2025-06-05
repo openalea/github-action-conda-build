@@ -180,8 +180,8 @@ jobs:
     runs-on: ubuntu-latest
     # ensure it runs after build_and_publish (if tag & release are created simultaneously) 
     needs: build-and-publish
-    if: (inputs.promote_to_main == "true" || github.event_name == 'release') && (needs.build-and-publish.result == 'skipped' || needs.build-and-publish.result == 'success')
-    - steps:
+    if: (inputs.force_promote == "true" || github.event_name == 'release') && (needs.build-and-publish.result == 'skipped' || needs.build-and-publish.result == 'success')
+    steps:
     - name: Promote to main Action Call
       uses: openalea/action-build-publish-anaconda/promote_to_main@main
       with:
