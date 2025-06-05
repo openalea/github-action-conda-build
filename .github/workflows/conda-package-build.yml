@@ -39,12 +39,12 @@ on:
         required: false
         type: string
       force_label:
-        description: 'Force label of Anaconda channel to upload to. If not 'false', force_label is used as label. Default is "false" (do not force, let workflow decide).'
+        description: 'Force label of Anaconda channel to upload to. If not "false", force_label is used as label. Default is "false" (do not force, let workflow decide).'
         default: 'determine_label'
         required: false
         type: string
       force_suffix:
-        description: 'Force suffix for package build_string. If not 'false', force_suffix is used as suffix. Default is "false" (do not force, let workflow decide)'
+        description: 'Force suffix for package build_string. If not "false", force_suffix is used as suffix. Default is "false" (do not force, let workflow decide)'
         default: 'determine_suffix'
         required: false
         type: string
