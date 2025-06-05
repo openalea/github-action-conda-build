@@ -65,7 +65,7 @@ on:
         type: string
       force_promote:
         description: 'Force promotion from label <promote_from> to label "main". Default is "false" (do not force, let workflow decide)'
-        default: 'true'
+        default: 'false'
         required: false
         type: string
     secrets:
@@ -180,7 +180,7 @@ jobs:
     runs-on: ubuntu-latest
     # ensure it runs after build_and_publish (if tag & release are created simultaneously) 
     needs: build-and-publish
-    if: (inputs.force_promote == "true" || github.event_name == 'release') && (needs.build-and-publish.result == 'skipped' || needs.build-and-publish.result == 'success')
+    if: ${{ (inputs.force_promote == "true" || github.event_name == 'release') && (needs.build-and-publish.result == 'skipped' || needs.build-and-publish.result == 'success') }}
     steps:
     - name: Promote to main Action Call
       uses: openalea/action-build-publish-anaconda/promote_to_main@main
@@ -188,7 +188,3 @@ jobs:
         python: ${{ fromJson(inputs.python-minor-version)[fromJson(inputs.python-minor-version).length - 1] }}
         token: ${{ secrets.anaconda_token }}
         promote_from: ${{ inputs.promote_from }}
-
-
-
-
