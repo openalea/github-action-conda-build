@@ -77,19 +77,24 @@ on:
 jobs:
   set-matrix:
     runs-on: ubuntu-latest
+    env:
+      ALL_OS: ${{ inputs.force_all_os == 'true' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.event_name == 'pull_request' || startsWith(github.ref, 'refs/tags/v') }}
+      ALL_PY: ${{ inputs.force_all_py == 'true' || startsWith(github.ref, 'refs/tags/v') }}
+      OS_LIST: ${{ inputs.operating-system }}
+      PY_LIST: ${{ inputs.python-minor-version }}
     outputs:
       os: ${{ steps.set.outputs.os }}
       py: ${{ steps.set.outputs.py }}
     steps:
     - id: set
       run: |
-       if [[ '${{ inputs.force_all_os }}' == 'true' || '${{ github.ref }}' == 'refs/heads/main' || '${{ github.ref }}' == 'refs/heads/master' || '${{ github.event_name }}' == 'pull_request' || '${{ github.ref }}' == refs/tags/v*]]; then
-        os='${{ inputs.operating-system }}'
+       if [[ "$ALL_OS" == "true" ]]; then
+        os="$OS_LIST"
        else
         os='["ubuntu-latest"]'
        fi
-       if [[ '${{ inputs.force_all_py }}' == 'true' || '${{ github.ref }}' == refs/tags/v* ]]; then
-        py='${{ inputs.python-minor-version }}'
+       if [[ "$ALL_PY" == "TRUE" ]]; then
+        py="$PY_LIST"
        else
         py='[12]'
        fi
