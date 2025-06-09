@@ -20,7 +20,7 @@ on:
         type: string
       conda-channels:
         description: 'Conda channels used during the building phase of the package. Default is the value of the GitHub variable `ANACONDA_CHANNELS`, or, if not set, `openalea3,conda-forge` '
-        default: '${{ vars.ANACONDA_CHANNELS || "conda-forge,openalea3" }}'
+        default: ${{ vars.ANACONDA_CHANNELS || 'conda-forge,openalea3' }}
         required: false
         type: string
       build-options:
