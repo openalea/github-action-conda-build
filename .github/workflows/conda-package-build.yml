@@ -80,7 +80,31 @@ on:
 
 # Openalea strategy for build-publish-promote CI (triggered on: push: all branches (*), tags:v*, pull-request and release)
 jobs:
+  set-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      os: ${{ steps.set.outputs.os }}
+      py: ${{ steps.set.outputs.py }}
+    steps:
+    - id: set
+      run: |
+       if [[ '${{ inputs.force_all_os }}' == 'true' || '${{ github.ref }}' == 'refs/heads/main' || '${{ github.ref }}' == 'refs/heads/master' || '${{ github.event_name }}' == 'pull_request' || '${{ github.ref }}' == refs/tags/v*]]; then
+        os='${{ inputs.operating-system }}'
+       else
+        os='["ubuntu-latest"]'
+       fi
+       if [[ '${{ inputs.force_all_py }}' == 'true' || '${{ github.ref }}' == refs/tags/v* ]]; then
+        py='${{ inputs.python-minor-version }}'
+       else
+        py='[12]'
+       fi
+       echo "Selected operating systems: $os"
+       echo "Selected Python minor versions: $py"
+       # Export as job outputs
+       echo "os=$os" >> $GITHUB_OUTPUT
+       echo "py=$py" >> $GITHUB_OUTPUT
   build-and-publish:
+    needs: set-matrix
     name: ${{ matrix.os }}, Python 3.${{ matrix.python-minor-version }} for conda deployment
     # skip this job on release
     if: ${{ (inputs.force_build_and_publish == 'true') || (github.event_name != 'release') }}
@@ -90,29 +114,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ fromJson(inputs.operating-system) }}
-        python-minor-version: ${{ fromJson(inputs.python-minor-version) }}
-        all_os:
-          - ${{ (inputs.all_os == 'true') || (github.ref == 'refs/heads/master') || (github.ref == 'refs/heads/main') || (github.event_name == 'pull_request') || (startsWith(github.ref, 'refs/tags/v')) }}
-        all_py:
-          - ${{ (inputs.all_py == 'true') || (startsWith(github.ref, 'refs/tags/v')) }}
-        exclude:
-          - all_py: false
-            python-minor-version: 9
-          - all_py: false
-            python-minor-version: 10
-          - all_py: false
-            python-minor-version: 11
-          - all_os: false
-            os: macos-latest
-            python-minor-version: 12
-          - all_os: false
-            os: macos-13
-            python-minor-version: 12
-          - all_os: false
-            os: windows-latest
-            python-minor-version: 12
-
+        os: ${{ fromJson(needs.set-matrix.outputs.os) }}
+        python-minor-version: ${{ fromJson(needs.set-matrix.outputs.py) }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
