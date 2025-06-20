@@ -85,7 +85,7 @@ jobs:
         if_true: 'true'
         if_false: 'false'
     - name: Build and Publish
-      uses: openalea/action-build-publish-anaconda/build_and_publish@relocate_buildpublish
+      uses: openalea/action-build-publish-anaconda/build_and_publish@main
       with:
         conda: ${{ inputs.conda-directory }}
         python: ${{ matrix.python-minor-version }}
