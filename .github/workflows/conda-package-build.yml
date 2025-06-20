@@ -8,58 +8,82 @@ on:
         default: "conda"
         required: false
         type: string
+
       python-minor-version:
-        description: 'Python minor version on which to build / deploy the package. Default is "[8, 9, 10, 11, 12]" '
-        default: "[9, 10, 11, 12]"
+        description: 'Python minor versions to build/deploy the package.'
+        default: [9, 10, 11, 12]
         required: false
-        type: string
+        type: array
+
       operating-system:
-        description: 'OS on which to build / deploy the package. Default is "[ ubuntu-latest , macos-latest , macos-13 , windows-latest ]" '
-        default: '["ubuntu-latest", "macos-latest", "macos-13", "windows-latest"]'
+        description: 'OS list for build/deploy.'
+        default: ["ubuntu-latest", "macos-latest", "macos-13", "windows-latest"]
         required: false
-        type: string
+        type: array
+
       numpy-version:
-        description: 'Numpy minor version. Default is None.'
+        description: 'Numpy minor version. Default is 0 (None).'
         default: 0
         required: false
         type: number
+
       anaconda-channel:
-        description: 'Channel hosting developent labels to publish on'
+        description: 'Channel hosting development labels to publish on.'
         default: 'https://conda.anaconda.org/openalea3'
         required: false
+        type: string
+
       labels:
-        description: 'A comma-separated (no space) string of channel labels used for development, release candidates and release builds'
+        description: 'Comma-separated channel labels for dev/rc/main.'
         default: 'dev,rc,main'
         required: false
+        type: string
+
       build-options:
-        description: 'Build options for the package. Default is "--no-test".'
+        description: 'Build options for the package.'
         default: '--no-test'
         required: false
         type: string
+
       force-build-matrix:
-        description: 'Force full input matrix builds whatever the context.'
-        default: 'false'
+        description: 'Force full input matrix builds regardless of context.'
+        default: false
         required: false
+        type: boolean
+
       force-skip-promotion:
-        description: 'Force skipping promotion.'
-        default: 'false'
+        description: 'Force skipping promotion step.'
+        default: false
         required: false
+        type: boolean
+
       force-skip-publish:
-        description: 'Force skipping publication.'
-        default: 'false'
+        description: 'Force skipping publication step.'
+        default: false
         required: false
+        type: boolean
+
     secrets:
       anaconda_token:
-        description: 'Anaconda access Token (required)'
+        description: 'Anaconda access token (required).'
         required: true
 
 jobs:
   setup-ci:
     name: Setup CI
     runs-on: ubuntu-latest
+    outputs:
+      build_os: ${{ steps.set.outputs.build_os }}
+      build_py: ${{ steps.set.outputs.build_py }}
+      channels: ${{ steps.set.outputs.channels }}
+      publish: ${{ steps.set.outputs.publish }}
+      publish_on: ${{ steps.set.outputs.publish_on }}
+      promote_from: ${{ steps.set.outputs.promote_from }}
+      promote_to: ${{ steps.set.outputs.promote_to }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Run composite action
         id: set
         uses: openalea/action-build-publish-anaconda/setup-ci@dev
@@ -72,6 +96,7 @@ jobs:
           labels: ${{ inputs.labels }}
           force-skip-promotion: ${{ inputs.force-skip-promotion }}
           force-skip-publish: ${{ inputs.force-skip-publish }}
+
   build-and-publish:
     name: ${{ matrix.os }}, Python 3.${{ matrix.python-minor-version }} for conda deployment
     runs-on: ${{ matrix.os }}
@@ -79,25 +104,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ${{ needs.set.outputs.build_os }}
-        python-minor-version: ${{ needs.set.outputs.build_py }}
+        os: ${{ fromJson(needs.setup-ci.outputs.build_os) }}
+        python-minor-version: ${{ fromJson(needs.setup-ci.outputs.build_py) }}
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-        fetch-tags: true
-    - name: Build and Publish
-      uses: openalea/action-build-publish-anaconda/build_and_publish@dev
-      with:
-        conda-directory: ${{ inputs.conda-directory }}
-        python: ${{ matrix.python-minor-version }}
-        numpy: ${{ inputs.numpy-version }}
-        channels: ${{ needs.set.outputs.channels }}
-        token: ${{ secrets.anaconda_token }}
-        publish: ${{ needs.set.outputs.publish }}
-        label: ${{ needs.set.outputs.publish_on }}
-        build-options: ${{ inputs.build-options }}
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Build and Publish
+        uses: openalea/action-build-publish-anaconda/build_and_publish@dev
+        with:
+          conda-directory: ${{ inputs.conda-directory }}
+          python: ${{ matrix.python-minor-version }}
+          numpy: ${{ inputs.numpy-version }}
+          channels: ${{ needs.setup-ci.outputs.channels }}
+          token: ${{ secrets.anaconda_token }}
+          publish: ${{ needs.setup-ci.outputs.publish }}
+          label: ${{ needs.setup-ci.outputs.publish_on }}
+          build-options: ${{ inputs.build-options }}
+
   promote:
     name: Promotion
     runs-on: ubuntu-latest
@@ -105,10 +132,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Run composite action
         id: promote
         uses: openalea/action-build-publish-anaconda/promote@dev
         with:
           token: ${{ secrets.anaconda_token }}
-          promote_from: ${{ needs.setup-ci.set.outputs.promote_from }}
-          promote_to: ${{ needs.setup-ci.set.outputs.promote_to }}
+          promote_from: ${{ needs.setup-ci.outputs.promote_from }}
+          promote_to: ${{ needs.setup-ci.outputs.promote_to }}
