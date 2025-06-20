@@ -10,7 +10,7 @@ on:
         type: string
       python-minor-version:
         description: 'Python minor version on which to build / deploy the package. Default is "[8, 9, 10, 11, 12]" '
-        default: "[8, 9, 10, 11, 12]"
+        default: "[9, 10, 11, 12]"
         required: false
         type: string
       operating-system:
@@ -56,22 +56,20 @@ jobs:
           - ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v') }}
         exclude:
           - isMaster: false
-            python-minor-version: 8
-          - isMaster: false
             python-minor-version: 9
+          - isMaster: false
+            python-minor-version: 10
           - isMaster: false
             python-minor-version: 11
           - isMaster: false
+            os: macos-latest
             python-minor-version: 12
           - isMaster: false
-            os: macos-latest
-            python-minor-version: 10
-          - isMaster: false
             os: macos-13
-            python-minor-version: 10
+            python-minor-version: 12
           - isMaster: false
             os: windows-latest
-            python-minor-version: 10
+            python-minor-version: 12
 
     steps:
     - name: Checkout
@@ -87,7 +85,7 @@ jobs:
         if_true: 'true'
         if_false: 'false'
     - name: Build and Publish
-      uses: openalea/action-build-publish-anaconda@main
+      uses: openalea/action-build-publish-anaconda/build_and_publish@main
       with:
         conda: ${{ inputs.conda-directory }}
         python: ${{ matrix.python-minor-version }}
